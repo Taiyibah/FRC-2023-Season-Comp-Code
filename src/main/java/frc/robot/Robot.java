@@ -7,9 +7,7 @@ package frc.robot;
 import com.ctre.phoenix.motorcontrol.ControlMode;
 import com.ctre.phoenix.motorcontrol.NeutralMode;
 import com.ctre.phoenix.motorcontrol.can.WPI_TalonFX;
-import com.ctre.phoenix.sensors.Pigeon2;
-import com.ctre.phoenix.sensors.Pigeon2Configuration;
-import com.ctre.phoenix.sensors.BasePigeon;
+//import com.ctre.phoenix.sensors.Pigeon2;
 import com.revrobotics.CANSparkMax;
 import com.revrobotics.CANSparkMax.IdleMode;
 import com.revrobotics.CANSparkMaxLowLevel.MotorType;
@@ -28,10 +26,10 @@ public class Robot extends TimedRobot {
    * Autonomous selection options.
    */
 
-  private static final String kJoysticksGamepad = "joysticks and gamepad";
+  /*private static final String kJoysticksGamepad = "joysticks and gamepad";
   private static final String kDualGamepads = "gamepads only";
   private String m_controlsSelected;
-  private final SendableChooser<String> m_controlsChooser = new SendableChooser<>();
+  private final SendableChooser<String> m_controlsChooser = new SendableChooser<>();*/
 
   private static final String kNoMobilityAuto = "no mobility";
   private static final String kConeAuto = "cone";
@@ -53,13 +51,13 @@ public class Robot extends TimedRobot {
   WPI_TalonFX driveLRTalon = new WPI_TalonFX(9);
   MotorControllerGroup left = new MotorControllerGroup(driveLFTalon, driveLRTalon);
 
-  WPI_TalonFX driveRFTalon = new WPI_TalonFX(8);
+  WPI_TalonFX driveRFTalon = new WPI_TalonFX(50);
   WPI_TalonFX driveRRTalon = new WPI_TalonFX(5);
   MotorControllerGroup right = new MotorControllerGroup(driveRFTalon, driveRRTalon);
 
   DifferentialDrive tankDrive = new DifferentialDrive(left, right);
 
-  Pigeon2 tiltSensor = new Pigeon2(4, null);
+  /*Pigeon2 tiltSensor = new Pigeon2(4, null);
 
   double pitch = 0;
   double yaw = 0;
@@ -70,10 +68,8 @@ public class Robot extends TimedRobot {
 
   public double getYaw() {
     return yaw;
-  }
+  }*/
 
-  Pigeon2Configuration config = new Pigeon2Configuration();
-  // set mount pose as rolled 90 degrees counter-clockwise
   /*
    * Mechanism motor controller instances.
    * 
@@ -85,7 +81,7 @@ public class Robot extends TimedRobot {
    * The intake is a NEO 550 on Everybud.
    */
   WPI_TalonFX arm = new WPI_TalonFX(1);
-  CANSparkMax intake = new CANSparkMax(4, MotorType.kBrushless);
+  CANSparkMax intake = new CANSparkMax(11, MotorType.kBrushless);
 
   /**
    * The starter code uses the most generic joystick class.
@@ -96,10 +92,10 @@ public class Robot extends TimedRobot {
    * mode (switch set to X on the bottom) or a different controller
    * that you feel is more comfortable.
    */
-  Joystick jLeft = new Joystick(0);
-  Joystick jRight = new Joystick(1);
-  GenericHID Gpad = new GenericHID(2);
 
+  GenericHID Gpad = new GenericHID(0);
+  Joystick JoystickLeft = new Joystick(1);
+  Joystick JoystickRight = new Joystick(2);
   /*
    * Magic numbers. Use these to adjust settings.
    */
@@ -112,7 +108,7 @@ public class Robot extends TimedRobot {
   /**
    * Percent output to run the arm up/down at
    */
-  static final double ARM_OUTPUT_POWER = 0.4;
+  static final double ARM_OUTPUT_POWER = 0.2;
 
   /**
    * How many amps the intake can use while picking up
@@ -132,7 +128,7 @@ public class Robot extends TimedRobot {
   /**
    * Percent output for holding
    */
-  static final double INTAKE_HOLD_POWER = 0.07;
+  static final double INTAKE_HOLD_POWER = 0.00;
 
   /**
    * Time to extend or retract arm in auto
@@ -177,9 +173,9 @@ public class Robot extends TimedRobot {
     m_autoChooser.addOption("mobility only", kMobilityOnlyAuto);
     SmartDashboard.putData("choose autonomous setup", m_autoChooser);
 
-    m_controlsChooser.setDefaultOption("gamepads only", kDualGamepads);
+    /*m_controlsChooser.setDefaultOption("gamepads only", kDualGamepads);
     m_controlsChooser.addOption("joysticks and gamepad", kJoysticksGamepad);
-    SmartDashboard.putData("choose control layout", m_controlsChooser);
+    SmartDashboard.putData("choose control layout", m_controlsChooser);*/
 
     /*
      * You will need to change some of these from false to true.
@@ -188,8 +184,8 @@ public class Robot extends TimedRobot {
      * to the set() methods. Push the joystick forward. Reverse the motor
      * if it is going the wrong way. Repeat for the other 3 motors.
      */
-    driveLFTalon.setInverted(false);
-    driveLRTalon.setInverted(false);
+    driveLFTalon.setInverted(true);
+    driveLRTalon.setInverted(true);
     driveRFTalon.setInverted(false);
     driveRRTalon.setInverted(false);
 
@@ -260,10 +256,6 @@ public class Robot extends TimedRobot {
     SmartDashboard.putNumber("intake motor temperature (C)", intake.getMotorTemperature());
   }
 
-  public void pigeonSensor() {
-
-  }
-
   /**
    * This method is called every 20 ms, no matter the mode. It runs after
    * the autonomous and teleop specific period methods.
@@ -300,31 +292,25 @@ public class Robot extends TimedRobot {
   }
 
   public void NoMobilityAuto() {
-    setArmMotor(0.0);
+    /*setArmMotor(0.0);
     setIntakeMotor(0.0, INTAKE_CURRENT_LIMIT_A);
     setDriveMotors(0.0, 0.0);
-    return;
+    return;*/
   }
 
   public void MobilityOnlyAuto() {
 
-    double timeElapsed = Timer.getFPGATimestamp() - autonomousStartTime;
-
-    if (timeElapsed < AUTO_DRIVE_TIME_F + AUTO_DRIVE_TIME_F) {
-      setArmMotor(0.0);
-      setIntakeMotor(0.0, INTAKE_CURRENT_LIMIT_A);
-      setDriveMotors(AUTO_DRIVE_SPEED_F, 0.0);
-    } else {
+    /*} else {
       setArmMotor(0.0);
       setIntakeMotor(0.0, INTAKE_CURRENT_LIMIT_A);
       setDriveMotors(0.0, 0.0);
-    }
+    }*/
 
   }
 
   public void MobilityAuto() {
 
-    double timeElapsed = Timer.getFPGATimestamp() - autonomousStartTime;
+   /* double timeElapsed = Timer.getFPGATimestamp() - autonomousStartTime;
 
     if (timeElapsed < ARM_EXTEND_TIME_S) {
       setArmMotor(ARM_OUTPUT_POWER);
@@ -346,13 +332,13 @@ public class Robot extends TimedRobot {
       setArmMotor(0.0);
       setIntakeMotor(0.0, INTAKE_CURRENT_LIMIT_A);
       setDriveMotors(0.0, 0.0);
-    }
+    }*/
 
   }
 
   public void MobilityBalance() {
 
-    double timeElapsed = Timer.getFPGATimestamp() - autonomousStartTime;
+    /*double timeElapsed = Timer.getFPGATimestamp() - autonomousStartTime;
 
     if (timeElapsed < ARM_EXTEND_TIME_S) {
       setArmMotor(ARM_OUTPUT_POWER);
@@ -373,15 +359,15 @@ public class Robot extends TimedRobot {
     } else if (timeElapsed < ARM_EXTEND_TIME_S + AUTO_THROW_TIME_S + ARM_EXTEND_TIME_S + AUTO_DRIVE_TIME
         + AUTO_DRIVE_TIME_F) {
 
-      if (pitch < 0 && yaw == 0) {
+      if (pitch < 0) {
 
         setDriveMotors(AUTO_DRIVE_SPEED_F, 0.0);
 
-      } else if (pitch > 0 && yaw == 0) {
+      } else if (pitch > 0) {
 
         setDriveMotors(AUTO_DRIVE_SPEED, 0.0);
 
-      } else if (pitch == 0 && yaw == 0) {
+      } else if (pitch < 0) {
 
         setDriveMotors(0.0, 0.1);
 
@@ -391,13 +377,13 @@ public class Robot extends TimedRobot {
       setArmMotor(0.0);
       setIntakeMotor(0.0, INTAKE_CURRENT_LIMIT_A);
       setDriveMotors(0.0, 0.0);
-    }
+    }*/
   }
 
   @Override
   public void autonomousPeriodic() {
 
-    if (m_autoSelected == kNoMobilityAuto) {
+    /*if (m_autoSelected == kNoMobilityAuto) {
       NoMobilityAuto();
     }
 
@@ -419,7 +405,7 @@ public class Robot extends TimedRobot {
 
     if (m_autoSelected == kCubeBalanceAuto) {
       MobilityBalance();
-    }
+    }*/
 
   }
 
@@ -480,7 +466,7 @@ public class Robot extends TimedRobot {
     }
     setIntakeMotor(intakePower, intakeAmps);
 
-    tankDrive.tankDrive(jRight.getRawAxis(1), jLeft.getRawAxis(1));
+    tankDrive.tankDrive(JoystickLeft.getRawAxis(1), JoystickRight.getRawAxis(1));
     /*
      * Negative signs here because the values from the analog sticks are backwards
      * from what we want. Forward returns a negative when we want it positive.
