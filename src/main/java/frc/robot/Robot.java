@@ -7,6 +7,9 @@ package frc.robot;
 import com.ctre.phoenix.motorcontrol.ControlMode;
 import com.ctre.phoenix.motorcontrol.NeutralMode;
 import com.ctre.phoenix.motorcontrol.can.WPI_TalonFX;
+import com.ctre.phoenix.sensors.Pigeon2;
+import com.ctre.phoenix.sensors.Pigeon2Configuration;
+import com.ctre.phoenix.sensors.BasePigeon;
 import com.revrobotics.CANSparkMax;
 import com.revrobotics.CANSparkMax.IdleMode;
 import com.revrobotics.CANSparkMaxLowLevel.MotorType;
@@ -24,11 +27,20 @@ public class Robot extends TimedRobot {
   /*
    * Autonomous selection options.
    */
-  private static final String kNothingAuto = "do nothing";
+
+  private static final String kJoysticksGamepad = "joysticks and gamepad";
+  private static final String kDualGamepads = "gamepads only";
+  private String m_controlsSelected;
+  private final SendableChooser<String> m_controlsChooser = new SendableChooser<>();
+
+  private static final String kNoMobilityAuto = "no mobility";
   private static final String kConeAuto = "cone";
   private static final String kCubeAuto = "cube";
+  private static final String kConeBalanceAuto = "cone balance";
+  private static final String kCubeBalanceAuto = "cube balance";
+  private static final String kMobilityOnlyAuto = "mobility only";
   private String m_autoSelected;
-  private final SendableChooser<String> m_chooser = new SendableChooser<>();
+  private final SendableChooser<String> m_autoChooser = new SendableChooser<>();
 
   /*
    * Drive motor controller instances.
@@ -37,16 +49,31 @@ public class Robot extends TimedRobot {
    * Grouped to left and right side
    */
 
-  WPI_TalonFX driveLFTalon = new WPI_TalonFX(1);
-  WPI_TalonFX driveLRTalon = new WPI_TalonFX(3);
+  WPI_TalonFX driveLFTalon = new WPI_TalonFX(3);
+  WPI_TalonFX driveLRTalon = new WPI_TalonFX(9);
   MotorControllerGroup left = new MotorControllerGroup(driveLFTalon, driveLRTalon);
 
-  WPI_TalonFX driveRFTalon = new WPI_TalonFX(2);
-  WPI_TalonFX driveRRTalon = new WPI_TalonFX(4);
+  WPI_TalonFX driveRFTalon = new WPI_TalonFX(8);
+  WPI_TalonFX driveRRTalon = new WPI_TalonFX(5);
   MotorControllerGroup right = new MotorControllerGroup(driveRFTalon, driveRRTalon);
 
   DifferentialDrive tankDrive = new DifferentialDrive(left, right);
 
+  Pigeon2 tiltSensor = new Pigeon2(4, null);
+
+  double pitch = 0;
+  double yaw = 0;
+
+  public double getPitch() {
+    return pitch;
+  }
+
+  public double getYaw() {
+    return yaw;
+  }
+
+  Pigeon2Configuration config = new Pigeon2Configuration();
+  // set mount pose as rolled 90 degrees counter-clockwise
   /*
    * Mechanism motor controller instances.
    * 
@@ -57,8 +84,8 @@ public class Robot extends TimedRobot {
    * The arm is a NEO on Everybud.
    * The intake is a NEO 550 on Everybud.
    */
-  CANSparkMax arm = new CANSparkMax(5, MotorType.kBrushless);
-  CANSparkMax intake = new CANSparkMax(6, MotorType.kBrushless);
+  WPI_TalonFX arm = new WPI_TalonFX(1);
+  CANSparkMax intake = new CANSparkMax(4, MotorType.kBrushless);
 
   /**
    * The starter code uses the most generic joystick class.
@@ -123,19 +150,36 @@ public class Robot extends TimedRobot {
   static final double AUTO_DRIVE_TIME = 6.0;
 
   /**
+   * Time to drive back in auto
+   */
+  static final double AUTO_DRIVE_TIME_F = 6.0;
+
+  /**
    * Speed to drive backwards in auto
    */
-  static final double AUTO_DRIVE_SPEED = -0.25;
+  static final double AUTO_DRIVE_SPEED = -0.50;
+
+  /**
+   * Speed to drive forwards in auto
+   */
+  static final double AUTO_DRIVE_SPEED_F = 0.50;
 
   /**
    * This method is run once when the robot is first started up.
    */
   @Override
   public void robotInit() {
-    m_chooser.setDefaultOption("do nothing", kNothingAuto);
-    m_chooser.addOption("cone and mobility", kConeAuto);
-    m_chooser.addOption("cube and mobility", kCubeAuto);
-    SmartDashboard.putData("Auto choices", m_chooser);
+    m_autoChooser.setDefaultOption("no mobility", kNoMobilityAuto);
+    m_autoChooser.addOption("cone and mobility", kConeAuto);
+    m_autoChooser.addOption("cube and mobility", kCubeAuto);
+    m_autoChooser.addOption("cone and balancing", kConeBalanceAuto);
+    m_autoChooser.addOption("cube and balancing", kCubeBalanceAuto);
+    m_autoChooser.addOption("mobility only", kMobilityOnlyAuto);
+    SmartDashboard.putData("choose autonomous setup", m_autoChooser);
+
+    m_controlsChooser.setDefaultOption("gamepads only", kDualGamepads);
+    m_controlsChooser.addOption("joysticks and gamepad", kJoysticksGamepad);
+    SmartDashboard.putData("choose control layout", m_controlsChooser);
 
     /*
      * You will need to change some of these from false to true.
@@ -154,9 +198,8 @@ public class Robot extends TimedRobot {
      * If either one is reversed, change that here too. Arm out is defined
      * as positive, arm in is negative.
      */
-    arm.setInverted(true);
-    arm.setIdleMode(IdleMode.kBrake);
-    arm.setSmartCurrentLimit(ARM_CURRENT_LIMIT_A);
+
+    arm.setInverted(false);
     intake.setInverted(false);
     intake.setIdleMode(IdleMode.kBrake);
   }
@@ -169,6 +212,7 @@ public class Robot extends TimedRobot {
    * @param turn    Desired turning speed. Positive is counter clockwise from
    *                above.
    */
+
   public void setDriveMotors(double forward, double turn) {
     SmartDashboard.putNumber("drive forward power (%)", forward);
     SmartDashboard.putNumber("drive turn power (%)", turn);
@@ -197,16 +241,16 @@ public class Robot extends TimedRobot {
    */
   public void setArmMotor(double percent) {
     arm.set(percent);
-    SmartDashboard.putNumber("arm power (%)", percent);
-    SmartDashboard.putNumber("arm motor current (amps)", arm.getOutputCurrent());
-    SmartDashboard.putNumber("arm motor temperature (C)", arm.getMotorTemperature());
+    SmartDashboard.putNumber("arm power (%)", arm.getBusVoltage());
+    SmartDashboard.putNumber("arm motor current (amps)", arm.getStatorCurrent());
+    SmartDashboard.putNumber("arm motor temperature (C)", arm.getTemperature());
   }
 
   /**
    * Set the arm output power.
    * 
    * @param percent desired speed
-   * @param amps current limit
+   * @param amps    current limit
    */
   public void setIntakeMotor(double percent, int amps) {
     intake.set(percent);
@@ -214,6 +258,10 @@ public class Robot extends TimedRobot {
     SmartDashboard.putNumber("intake power (%)", percent);
     SmartDashboard.putNumber("intake motor current (amps)", intake.getOutputCurrent());
     SmartDashboard.putNumber("intake motor temperature (C)", intake.getMotorTemperature());
+  }
+
+  public void pigeonSensor() {
+
   }
 
   /**
@@ -235,26 +283,46 @@ public class Robot extends TimedRobot {
     driveRFTalon.setNeutralMode(NeutralMode.Brake);
     driveRRTalon.setNeutralMode(NeutralMode.Brake);
 
-    m_autoSelected = m_chooser.getSelected();
+    m_autoSelected = m_autoChooser.getSelected();
     System.out.println("Auto selected: " + m_autoSelected);
 
     if (m_autoSelected == kConeAuto) {
       autonomousIntakePower = INTAKE_OUTPUT_POWER;
     } else if (m_autoSelected == kCubeAuto) {
       autonomousIntakePower = -INTAKE_OUTPUT_POWER;
+    } else if (m_autoSelected == kConeBalanceAuto) {
+      autonomousIntakePower = -INTAKE_OUTPUT_POWER;
+    } else if (m_autoSelected == kCubeBalanceAuto) {
+      autonomousIntakePower = -INTAKE_OUTPUT_POWER;
     }
 
     autonomousStartTime = Timer.getFPGATimestamp();
   }
 
-  @Override
-  public void autonomousPeriodic() {
-    if (m_autoSelected == kNothingAuto) {
+  public void NoMobilityAuto() {
+    setArmMotor(0.0);
+    setIntakeMotor(0.0, INTAKE_CURRENT_LIMIT_A);
+    setDriveMotors(0.0, 0.0);
+    return;
+  }
+
+  public void MobilityOnlyAuto() {
+
+    double timeElapsed = Timer.getFPGATimestamp() - autonomousStartTime;
+
+    if (timeElapsed < AUTO_DRIVE_TIME_F + AUTO_DRIVE_TIME_F) {
+      setArmMotor(0.0);
+      setIntakeMotor(0.0, INTAKE_CURRENT_LIMIT_A);
+      setDriveMotors(AUTO_DRIVE_SPEED_F, 0.0);
+    } else {
       setArmMotor(0.0);
       setIntakeMotor(0.0, INTAKE_CURRENT_LIMIT_A);
       setDriveMotors(0.0, 0.0);
-      return;
     }
+
+  }
+
+  public void MobilityAuto() {
 
     double timeElapsed = Timer.getFPGATimestamp() - autonomousStartTime;
 
@@ -279,6 +347,80 @@ public class Robot extends TimedRobot {
       setIntakeMotor(0.0, INTAKE_CURRENT_LIMIT_A);
       setDriveMotors(0.0, 0.0);
     }
+
+  }
+
+  public void MobilityBalance() {
+
+    double timeElapsed = Timer.getFPGATimestamp() - autonomousStartTime;
+
+    if (timeElapsed < ARM_EXTEND_TIME_S) {
+      setArmMotor(ARM_OUTPUT_POWER);
+      setIntakeMotor(0.0, INTAKE_CURRENT_LIMIT_A);
+      setDriveMotors(0.0, 0.0);
+    } else if (timeElapsed < ARM_EXTEND_TIME_S + AUTO_THROW_TIME_S) {
+      setArmMotor(0.0);
+      setIntakeMotor(autonomousIntakePower, INTAKE_CURRENT_LIMIT_A);
+      setDriveMotors(0.0, 0.0);
+    } else if (timeElapsed < ARM_EXTEND_TIME_S + AUTO_THROW_TIME_S + ARM_EXTEND_TIME_S) {
+      setArmMotor(-ARM_OUTPUT_POWER);
+      setIntakeMotor(0.0, INTAKE_CURRENT_LIMIT_A);
+      setDriveMotors(0.0, 0.0);
+    } else if (timeElapsed < ARM_EXTEND_TIME_S + AUTO_THROW_TIME_S + ARM_EXTEND_TIME_S + AUTO_DRIVE_TIME) {
+      setArmMotor(0.0);
+      setIntakeMotor(0.0, INTAKE_CURRENT_LIMIT_A);
+      setDriveMotors(AUTO_DRIVE_SPEED, 0.0);
+    } else if (timeElapsed < ARM_EXTEND_TIME_S + AUTO_THROW_TIME_S + ARM_EXTEND_TIME_S + AUTO_DRIVE_TIME
+        + AUTO_DRIVE_TIME_F) {
+
+      if (pitch < 0 && yaw == 0) {
+
+        setDriveMotors(AUTO_DRIVE_SPEED_F, 0.0);
+
+      } else if (pitch > 0 && yaw == 0) {
+
+        setDriveMotors(AUTO_DRIVE_SPEED, 0.0);
+
+      } else if (pitch == 0 && yaw == 0) {
+
+        setDriveMotors(0.0, 0.1);
+
+      }
+
+    } else {
+      setArmMotor(0.0);
+      setIntakeMotor(0.0, INTAKE_CURRENT_LIMIT_A);
+      setDriveMotors(0.0, 0.0);
+    }
+  }
+
+  @Override
+  public void autonomousPeriodic() {
+
+    if (m_autoSelected == kNoMobilityAuto) {
+      NoMobilityAuto();
+    }
+
+    if (m_autoSelected == kConeAuto) {
+      MobilityAuto();
+    }
+
+    if (m_autoSelected == kCubeAuto) {
+      MobilityAuto();
+    }
+
+    if (m_autoSelected == kConeBalanceAuto) {
+      MobilityBalance();
+    }
+
+    if (m_autoSelected == kCubeBalanceAuto) {
+      MobilityBalance();
+    }
+
+    if (m_autoSelected == kCubeBalanceAuto) {
+      MobilityBalance();
+    }
+
   }
 
   /**
@@ -313,7 +455,7 @@ public class Robot extends TimedRobot {
       armPower = 0.0;
     }
     setArmMotor(armPower);
-  
+
     double intakePower;
     int intakeAmps;
     if (Gpad.getRawButton(8)) {
@@ -343,7 +485,7 @@ public class Robot extends TimedRobot {
      * Negative signs here because the values from the analog sticks are backwards
      * from what we want. Forward returns a negative when we want it positive.
      */
-    
-  }
-}
 
+  }
+
+}
