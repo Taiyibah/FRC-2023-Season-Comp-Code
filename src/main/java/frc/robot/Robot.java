@@ -83,6 +83,8 @@ public class Robot extends TimedRobot {
   WPI_TalonFX arm = new WPI_TalonFX(1);
   CANSparkMax intake = new CANSparkMax(11, MotorType.kBrushless);
 
+  double randomVariable = 0;
+
   
 
   /**
