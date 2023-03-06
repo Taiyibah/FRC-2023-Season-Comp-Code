@@ -20,17 +20,14 @@ import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj.drive.DifferentialDrive;
 import edu.wpi.first.wpilibj.motorcontrol.MotorControllerGroup;
+import edu.wpi.first.wpilibj.AddressableLED;
+import edu.wpi.first.wpilibj.AddressableLEDBuffer;
+
 
 public class Robot extends TimedRobot {
   /*
    * Autonomous selection options.
    */
-
-  /*private static final String kJoysticksGamepad = "joysticks and gamepad";
-  private static final String kDualGamepads = "gamepads only";
-  private String m_controlsSelected;
-  private final SendableChooser<String> m_controlsChooser = new SendableChooser<>();*/
-
   private static final String kNoMobilityAuto = "no mobility";
   private static final String kConeAuto = "cone";
   private static final String kCubeAuto = "cube";
@@ -57,7 +54,7 @@ public class Robot extends TimedRobot {
 
   DifferentialDrive tankDrive = new DifferentialDrive(left, right);
 
-  /*Pigeon2 tiltSensor = new Pigeon2(4, null);
+ /* Pigeon2 tiltSensor = new Pigeon2(4, null);
 
   double pitch = 0;
   double yaw = 0;
@@ -100,6 +97,11 @@ public class Robot extends TimedRobot {
   GenericHID Gpad = new GenericHID(0);
   Joystick JoystickLeft = new Joystick(1);
   Joystick JoystickRight = new Joystick(2);
+
+  AddressableLED ledStrip = new AddressableLED(9);
+  AddressableLEDBuffer ledStripBuffer = new AddressableLEDBuffer(15);
+  int rainbowFirstPixelHue = 0;
+  
   /*
    * Magic numbers. Use these to adjust settings.
    */
@@ -112,7 +114,7 @@ public class Robot extends TimedRobot {
   /**
    * Percent output to run the arm up/down at
    */
-  static final double ARM_OUTPUT_POWER = 0.2;
+  static final double ARM_OUTPUT_POWER = 0.3;
 
   /**
    * How many amps the intake can use while picking up
@@ -127,12 +129,12 @@ public class Robot extends TimedRobot {
   /**
    * Percent output for intaking
    */
-  static final double INTAKE_OUTPUT_POWER = 1.0;
+  static final double INTAKE_OUTPUT_POWER = 0.40;
 
   /**
    * Percent output for holding
    */
-  static final double INTAKE_HOLD_POWER = 0.00;
+  static final double INTAKE_HOLD_POWER = 0.0;
 
   /**
    * Time to extend or retract arm in auto
@@ -157,12 +159,12 @@ public class Robot extends TimedRobot {
   /**
    * Speed to drive backwards in auto
    */
-  static final double AUTO_DRIVE_SPEED = -0.50;
+  static final double AUTO_DRIVE_SPEED = 0.20;
 
   /**
    * Speed to drive forwards in auto
    */
-  static final double AUTO_DRIVE_SPEED_F = 0.50;
+  static final double AUTO_DRIVE_SPEED_F = -0.20;
 
   /**
    * This method is run once when the robot is first started up.
@@ -177,6 +179,16 @@ public class Robot extends TimedRobot {
     m_autoChooser.addOption("mobility only", kMobilityOnlyAuto);
     SmartDashboard.putData("choose autonomous setup", m_autoChooser);
 
+
+    // Reuse buffer
+    // Default to a length of 60, start empty output
+    // Length is expensive to set, so only set it once, then just update data
+    ledStrip.setLength(ledStripBuffer.getLength());
+
+    // Set the data
+    ledStrip.setData(ledStripBuffer);
+    ledStrip.start();
+
     /*m_controlsChooser.setDefaultOption("gamepads only", kDualGamepads);
     m_controlsChooser.addOption("joysticks and gamepad", kJoysticksGamepad);
     SmartDashboard.putData("choose control layout", m_controlsChooser);*/
@@ -184,7 +196,7 @@ public class Robot extends TimedRobot {
     /*
      * You will need to change some of these from false to true.
      * 
-     * In the setDriveMotors method, comment out all but 1 of the 4 calls
+     * In the setDriveMotors method, comment out all but 1 of the 4 ca  ``lls
      * to the set() methods. Push the joystick forward. Reverse the motor
      * if it is going the wrong way. Repeat for the other 3 motors.
      */
@@ -202,6 +214,55 @@ public class Robot extends TimedRobot {
     arm.setInverted(false);
     intake.setInverted(false);
     intake.setIdleMode(IdleMode.kBrake);
+  }
+
+  public void yellowStrip() {
+    for (var i = 0; i < ledStripBuffer.getLength(); i++) {
+      // Sets the specified LED to the RGB values for red
+      ledStripBuffer.setRGB(i, 255, 255, 0);
+   }
+   
+   ledStrip.setData(ledStripBuffer);
+
+
+  }
+
+  public void purpleStrip() {
+    for (var i = 0; i < ledStripBuffer.getLength(); i++) {
+      // Sets the specified LED to the RGB values for red
+      ledStripBuffer.setRGB(i, 127, 0, 255);
+   }
+   
+   ledStrip.setData(ledStripBuffer);
+
+
+  }
+
+  public void rainbowStrip() {
+    // For every pixel
+    for (var i = 0; i < ledStripBuffer.getLength(); i++) {
+      // Calculate the hue - hue is easier for rainbows because the color
+      // shape is a circle so only one value needs to precess
+      final var hue = (rainbowFirstPixelHue + (i * 180 / ledStripBuffer.getLength())) % 180;
+      // Set the value
+    ledStripBuffer.setRGB(i, hue, 255, 128);
+    }
+    // Increase by to make the rainbow "move"
+    rainbowFirstPixelHue += 3;
+    // Check bounds
+    rainbowFirstPixelHue %= 180;
+
+  }
+
+  public void offStrip() {
+    for (var i = 0; i < ledStripBuffer.getLength(); i++) {
+      // Sets the specified LED to the RGB values for red
+      ledStripBuffer.setRGB(i, 0, 0, 0);
+   }
+   
+   ledStrip.setData(ledStripBuffer);
+
+
   }
 
   /**
@@ -296,10 +357,10 @@ public class Robot extends TimedRobot {
   }
 
   public void NoMobilityAuto() {
-    /*setArmMotor(0.0);
+    setArmMotor(0.0);
     setIntakeMotor(0.0, INTAKE_CURRENT_LIMIT_A);
     setDriveMotors(0.0, 0.0);
-    return;*/
+    return;
   }
 
   public void MobilityOnlyAuto() {
@@ -314,7 +375,7 @@ public class Robot extends TimedRobot {
 
   public void MobilityAuto() {
 
-   /* double timeElapsed = Timer.getFPGATimestamp() - autonomousStartTime;
+   double timeElapsed = Timer.getFPGATimestamp() - autonomousStartTime;
 
     if (timeElapsed < ARM_EXTEND_TIME_S) {
       setArmMotor(ARM_OUTPUT_POWER);
@@ -336,7 +397,7 @@ public class Robot extends TimedRobot {
       setArmMotor(0.0);
       setIntakeMotor(0.0, INTAKE_CURRENT_LIMIT_A);
       setDriveMotors(0.0, 0.0);
-    }*/
+    }
 
   }
 
@@ -387,7 +448,7 @@ public class Robot extends TimedRobot {
   @Override
   public void autonomousPeriodic() {
 
-    /*if (m_autoSelected == kNoMobilityAuto) {
+    if (m_autoSelected == kNoMobilityAuto) {
       NoMobilityAuto();
     }
 
@@ -409,7 +470,7 @@ public class Robot extends TimedRobot {
 
     if (m_autoSelected == kCubeBalanceAuto) {
       MobilityBalance();
-    }*/
+    }
 
   }
 
@@ -469,6 +530,20 @@ public class Robot extends TimedRobot {
       intakeAmps = 0;
     }
     setIntakeMotor(intakePower, intakeAmps);
+
+    if(Gpad.getRawButton(2)) {
+
+      yellowStrip();
+
+    } else if(Gpad.getRawButton(4)) {
+
+      purpleStrip();
+
+    } else {
+
+      offStrip();
+
+    }
 
     tankDrive.tankDrive(JoystickLeft.getRawAxis(1), JoystickRight.getRawAxis(1));
     /*
