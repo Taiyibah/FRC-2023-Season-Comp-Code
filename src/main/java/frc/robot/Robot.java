@@ -22,6 +22,8 @@ import edu.wpi.first.wpilibj.drive.DifferentialDrive;
 import edu.wpi.first.wpilibj.motorcontrol.MotorControllerGroup;
 import edu.wpi.first.wpilibj.AddressableLED;
 import edu.wpi.first.wpilibj.AddressableLEDBuffer;
+import edu.wpi.first.cameraserver.CameraServer;
+
 
 
 public class Robot extends TimedRobot {
@@ -178,6 +180,7 @@ public class Robot extends TimedRobot {
     m_autoChooser.addOption("cube and balancing", kCubeBalanceAuto);
     m_autoChooser.addOption("mobility only", kMobilityOnlyAuto);
     SmartDashboard.putData("choose autonomous setup", m_autoChooser);
+    CameraServer.startAutomaticCapture();
 
 
     // Reuse buffer
@@ -546,6 +549,7 @@ public class Robot extends TimedRobot {
     }
 
     tankDrive.tankDrive(JoystickLeft.getRawAxis(1), JoystickRight.getRawAxis(1));
+
     /*
      * Negative signs here because the values from the analog sticks are backwards
      * from what we want. Forward returns a negative when we want it positive.
