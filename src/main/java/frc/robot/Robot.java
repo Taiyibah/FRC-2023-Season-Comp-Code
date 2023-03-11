@@ -542,7 +542,7 @@ public class Robot extends TimedRobot {
 
     }
 
-    tankDrive.tankDrive(JoystickLeft.getRawAxis(1), JoystickRight.getRawAxis(1));
+    tankDrive.tankDrive(JoystickLeft.getRawAxis(1), JoystickRight.getRawAxis(3));
 
     /*
      * Negative signs here because the values from the analog sticks are backwards
