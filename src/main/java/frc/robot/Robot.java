@@ -7,7 +7,7 @@ package frc.robot;
 import com.ctre.phoenix.motorcontrol.ControlMode;
 import com.ctre.phoenix.motorcontrol.NeutralMode;
 import com.ctre.phoenix.motorcontrol.can.WPI_TalonFX;
-//import com.ctre.phoenix.sensors.Pigeon2;
+import com.ctre.phoenix.sensors.Pigeon2;
 import com.revrobotics.CANSparkMax;
 import com.revrobotics.CANSparkMax.IdleMode;
 import com.revrobotics.CANSparkMaxLowLevel.MotorType;
@@ -56,7 +56,7 @@ public class Robot extends TimedRobot {
 
   DifferentialDrive tankDrive = new DifferentialDrive(left, right);
 
- /* Pigeon2 tiltSensor = new Pigeon2(4, null);
+  Pigeon2 tiltSensor = new Pigeon2(4, null);
 
   double pitch = 0;
   double yaw = 0;
@@ -67,7 +67,7 @@ public class Robot extends TimedRobot {
 
   public double getYaw() {
     return yaw;
-  }*/
+  }
 
   /*
    * Mechanism motor controller instances.
@@ -154,19 +154,9 @@ public class Robot extends TimedRobot {
   static final double AUTO_DRIVE_TIME = 6.0;
 
   /**
-   * Time to drive back in auto
-   */
-  static final double AUTO_DRIVE_TIME_F = 6.0;
-
-  /**
    * Speed to drive backwards in auto
    */
   static final double AUTO_DRIVE_SPEED = 0.20;
-
-  /**
-   * Speed to drive forwards in auto
-   */
-  static final double AUTO_DRIVE_SPEED_F = -0.20;
 
   /**
    * This method is run once when the robot is first started up.
@@ -362,13 +352,20 @@ public class Robot extends TimedRobot {
 
   public void MobilityOnlyAuto() {
 
-    /*} else {
+    double timeElapsed = Timer.getFPGATimestamp() - autonomousStartTime;
+
+    if(timeElapsed < AUTO_DRIVE_TIME) {
       setArmMotor(0.0);
       setIntakeMotor(0.0, INTAKE_CURRENT_LIMIT_A);
-      setDriveMotors(0.0, 0.0);
-    }*/
+      setDriveMotors(-AUTO_DRIVE_SPEED, 0.0);
+    } else {
+      setArmMotor(0.0);
+      setIntakeMotor(0.0, INTAKE_CURRENT_LIMIT_A);
+      setDriveMotors(0.5, 0.0);
+    }
 
   }
+
 
   public void MobilityAuto() {
 
@@ -400,46 +397,48 @@ public class Robot extends TimedRobot {
 
   public void MobilityBalance() {
 
-    /*double timeElapsed = Timer.getFPGATimestamp() - autonomousStartTime;
+    double timeElapsed = Timer.getFPGATimestamp() - autonomousStartTime;
 
     if (timeElapsed < ARM_EXTEND_TIME_S) {
+      //Arm extends
       setArmMotor(ARM_OUTPUT_POWER);
       setIntakeMotor(0.0, INTAKE_CURRENT_LIMIT_A);
       setDriveMotors(0.0, 0.0);
     } else if (timeElapsed < ARM_EXTEND_TIME_S + AUTO_THROW_TIME_S) {
+      //Drops game piece
       setArmMotor(0.0);
       setIntakeMotor(autonomousIntakePower, INTAKE_CURRENT_LIMIT_A);
       setDriveMotors(0.0, 0.0);
     } else if (timeElapsed < ARM_EXTEND_TIME_S + AUTO_THROW_TIME_S + ARM_EXTEND_TIME_S) {
+      //Arm retracts
       setArmMotor(-ARM_OUTPUT_POWER);
       setIntakeMotor(0.0, INTAKE_CURRENT_LIMIT_A);
       setDriveMotors(0.0, 0.0);
     } else if (timeElapsed < ARM_EXTEND_TIME_S + AUTO_THROW_TIME_S + ARM_EXTEND_TIME_S + AUTO_DRIVE_TIME) {
+      //Robot drives in reverse
       setArmMotor(0.0);
       setIntakeMotor(0.0, INTAKE_CURRENT_LIMIT_A);
       setDriveMotors(AUTO_DRIVE_SPEED, 0.0);
-    } else if (timeElapsed < ARM_EXTEND_TIME_S + AUTO_THROW_TIME_S + ARM_EXTEND_TIME_S + AUTO_DRIVE_TIME
-        + AUTO_DRIVE_TIME_F) {
-
+    } else if (timeElapsed < ARM_EXTEND_TIME_S + AUTO_THROW_TIME_S + ARM_EXTEND_TIME_S + AUTO_DRIVE_TIME) {
+      //Robot drives forward 
+      setArmMotor(0.0);
+      setIntakeMotor(0.0, INTAKE_CURRENT_LIMIT_A);
+      setDriveMotors(AUTO_DRIVE_SPEED, 0.0);
+    } else if (timeElapsed < ARM_EXTEND_TIME_S + AUTO_THROW_TIME_S + ARM_EXTEND_TIME_S + AUTO_DRIVE_TIME + AUTO_DRIVE_TIME) {
+      //Balance on charging pad
       if (pitch < 0) {
-
-        setDriveMotors(AUTO_DRIVE_SPEED_F, 0.0);
-
+        setDriveMotors(-AUTO_DRIVE_SPEED, 0.0);
       } else if (pitch > 0) {
-
         setDriveMotors(AUTO_DRIVE_SPEED, 0.0);
-
       } else if (pitch < 0) {
-
         setDriveMotors(0.0, 0.1);
-
       }
-
     } else {
+      //Stops moving
       setArmMotor(0.0);
       setIntakeMotor(0.0, INTAKE_CURRENT_LIMIT_A);
       setDriveMotors(0.0, 0.0);
-    }*/
+    }
   }
 
   @Override
