@@ -56,7 +56,7 @@ public class Robot extends TimedRobot {
 
   DifferentialDrive tankDrive = new DifferentialDrive(left, right);
 
-  Pigeon2 tiltSensor = new Pigeon2(4, null);
+  Pigeon2 tiltSensor = new Pigeon2(4);
 
   double pitch = 0;
   double yaw = 0;
@@ -181,10 +181,6 @@ public class Robot extends TimedRobot {
     // Set the data
     ledStrip.setData(ledStripBuffer);
     ledStrip.start();
-
-    /*m_controlsChooser.setDefaultOption("gamepads only", kDualGamepads);
-    m_controlsChooser.addOption("joysticks and gamepad", kJoysticksGamepad);
-    SmartDashboard.putData("choose control layout", m_controlsChooser);*/
 
     /*
      * You will need to change some of these from false to true.
