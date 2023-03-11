@@ -202,6 +202,7 @@ public class Robot extends TimedRobot {
      * In the setDriveMotors method, comment out all but 1 of the 4 ca  ``lls
      * to the set() methods. Push the joystick forward. Reverse the motor
      * if it is going the wrong way. Repeat for the other 3 motors.
+     * Issue here: Is this correct?
      */
     driveLFTalon.setInverted(true);
     driveLRTalon.setInverted(true);
@@ -233,7 +234,7 @@ public class Robot extends TimedRobot {
   public void purpleStrip() {
     for (var i = 0; i < ledStripBuffer.getLength(); i++) {
       // Sets the specified LED to the RGB values for red
-      ledStripBuffer.setRGB(i, 127, 0, 255);
+      ledStripBuffer.setRGB(i, 163, 1, 255);
    }
    
    ledStrip.setData(ledStripBuffer);
@@ -241,19 +242,12 @@ public class Robot extends TimedRobot {
 
   }
 
-  public void rainbowStrip() {
-    // For every pixel
+  public void redStrip() {
     for (var i = 0; i < ledStripBuffer.getLength(); i++) {
-      // Calculate the hue - hue is easier for rainbows because the color
-      // shape is a circle so only one value needs to precess
-      final var hue = (rainbowFirstPixelHue + (i * 180 / ledStripBuffer.getLength())) % 180;
-      // Set the value
-    ledStripBuffer.setRGB(i, hue, 255, 128);
-    }
-    // Increase by to make the rainbow "move"
-    rainbowFirstPixelHue += 3;
-    // Check bounds
-    rainbowFirstPixelHue %= 180;
+      // Sets the specified LED to the RGB values for red
+      ledStripBuffer.setRGB(i, 255, 0, 0);
+   }
+   
 
   }
 
@@ -274,7 +268,7 @@ public class Robot extends TimedRobot {
    * 
    * @param forward Desired forward speed. Positive is forward.
    * @param turn    Desired turning speed. Positive is counter clockwise from
-   *                above.
+   *                above. here?
    */
 
   public void setDriveMotors(double forward, double turn) {
