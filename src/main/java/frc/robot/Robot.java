@@ -30,7 +30,6 @@ public class Robot extends TimedRobot {
   /*
    * Autonomous selection options.
    */
-  private static final String kNoMobilityAuto = "no mobility";
   private static final String kConeAuto = "cone";
   private static final String kCubeAuto = "cube";
   private static final String kConeBalanceAuto = "cone balance";
@@ -102,7 +101,6 @@ public class Robot extends TimedRobot {
 
   AddressableLED ledStrip = new AddressableLED(9);
   AddressableLEDBuffer ledStripBuffer = new AddressableLEDBuffer(15);
-  int rainbowFirstPixelHue = 0;
   
   /*
    * Magic numbers. Use these to adjust settings.
@@ -173,12 +171,11 @@ public class Robot extends TimedRobot {
    */
   @Override
   public void robotInit() {
-    m_autoChooser.setDefaultOption("no mobility", kNoMobilityAuto);
+    m_autoChooser.setDefaultOption("mobility only", kMobilityOnlyAuto);
     m_autoChooser.addOption("cone and mobility", kConeAuto);
     m_autoChooser.addOption("cube and mobility", kCubeAuto);
     m_autoChooser.addOption("cone and balancing", kConeBalanceAuto);
     m_autoChooser.addOption("cube and balancing", kCubeBalanceAuto);
-    m_autoChooser.addOption("mobility only", kMobilityOnlyAuto);
     SmartDashboard.putData("choose autonomous setup", m_autoChooser);
     CameraServer.startAutomaticCapture();
 
@@ -353,13 +350,6 @@ public class Robot extends TimedRobot {
     autonomousStartTime = Timer.getFPGATimestamp();
   }
 
-  public void NoMobilityAuto() {
-    setArmMotor(0.0);
-    setIntakeMotor(0.0, INTAKE_CURRENT_LIMIT_A);
-    setDriveMotors(0.0, 0.0);
-    return;
-  }
-
   public void MobilityOnlyAuto() {
 
     /*} else {
@@ -444,10 +434,6 @@ public class Robot extends TimedRobot {
 
   @Override
   public void autonomousPeriodic() {
-
-    if (m_autoSelected == kNoMobilityAuto) {
-      NoMobilityAuto();
-    }
 
     if (m_autoSelected == kConeAuto) {
       MobilityAuto();
@@ -542,7 +528,7 @@ public class Robot extends TimedRobot {
 
     }
 
-    tankDrive.tankDrive(JoystickLeft.getRawAxis(1), JoystickRight.getRawAxis(3));
+    tankDrive.tankDrive(JoystickLeft.getRawAxis(1), JoystickRight.getRawAxis(1));
 
     /*
      * Negative signs here because the values from the analog sticks are backwards
