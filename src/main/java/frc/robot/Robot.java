@@ -285,6 +285,13 @@ public class Robot extends TimedRobot {
     SmartDashboard.putNumber("arm power (%)", arm.getBusVoltage());
     SmartDashboard.putNumber("arm motor current (amps)", arm.getStatorCurrent());
     SmartDashboard.putNumber("arm motor temperature (C)", arm.getTemperature());
+    
+    {
+armMotor.set(armStick.gety());
+
+if (armPosition.get() >170) {armMotor.stopMotor}
+    }
+    
   }
 
   /**
